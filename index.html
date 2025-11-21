@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>ISS-Connectable Habitat Designer - NASA Space Apps 2025</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -16,30 +16,36 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
             color: #ffffff;
+            overscroll-behavior: none; 
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
         }
 
         .app-container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100%;
+            width: 100%;
         }
 
         .header {
             background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
-            padding: 1rem 2rem;
+            padding: 0.8rem 1.5rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             border-bottom: 2px solid #4a90e2;
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.2rem;
         }
 
         .header p {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             opacity: 0.9;
         }
 
@@ -47,6 +53,7 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
 
         .sidebar {
@@ -55,6 +62,33 @@
             border-right: 2px solid #4a90e2;
             padding: 1.5rem;
             overflow-y: auto;
+            z-index: 5;
+        }
+
+        /* MOBILE & TABLET ADJUSTMENTS */
+        @media (max-width: 768px) {
+            .header { padding: 0.5rem 1rem; }
+            .header h1 { font-size: 1.2rem; }
+            .header p { display: none; } 
+
+            .main-interface {
+                flex-direction: column-reverse; 
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 45%; 
+                border-right: none;
+                border-top: 2px solid #4a90e2;
+                padding: 1rem;
+            }
+
+            .viewport {
+                height: 55%; 
+                width: 100%;
+            }
+            
+            button, select, input { min-height: 44px; }
         }
 
         .sidebar-section {
@@ -90,10 +124,6 @@
             transition: all 0.3s ease;
         }
 
-        .mode-btn:hover {
-            background: rgba(74, 144, 226, 0.3);
-        }
-
         .mode-btn.active {
             background: #4a90e2;
             font-weight: 600;
@@ -106,8 +136,7 @@
             color: #cccccc;
         }
 
-        input[type='number'],
-        select {
+        input[type='number'], select {
             width: 100%;
             padding: 0.5rem;
             background: rgba(255, 255, 255, 0.1);
@@ -115,16 +144,6 @@
             border-radius: 6px;
             color: #ffffff;
             font-size: 0.9rem;
-        }
-
-        .connection-point {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .connection-point input {
-            flex: 1;
         }
 
         button {
@@ -140,11 +159,6 @@
             transition: all 0.3s ease;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
-        }
-
         button.danger {
             background: linear-gradient(135deg, #e74c3c, #c0392b);
         }
@@ -152,6 +166,7 @@
         .component-list {
             max-height: 300px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch; 
         }
 
         .component-item {
@@ -161,6 +176,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
             transition: all 0.3s ease;
         }
 
@@ -170,8 +187,8 @@
         }
 
         .component-item span {
-            font-size: 1rem;
-            margin-right: 0.5rem;
+            font-size: 1.2rem;
+            margin-right: 0.8rem;
         }
 
         .viewport {
@@ -179,85 +196,58 @@
             display: flex;
             flex-direction: column;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            position: relative;
         }
 
         .viewport-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.5rem;
+            padding: 0.5rem 1rem;
             background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
 
         .viewport-header h3 {
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: #4a90e2;
-        }
-
-        .view-controls {
-            display: flex;
-            gap: 0.5rem;
         }
 
         .view-controls button {
             width: auto;
-            padding: 0.5rem 1rem;
-            margin: 0;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
         }
 
         #three-container {
             flex: 1;
             position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
 
         .status-bar {
-            padding: 0.75rem 1.5rem;
-            background: rgba(0, 0, 0, 0.5);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
         }
 
         .status-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .status-label {
-            color: #888;
-            font-size: 0.85rem;
+            margin: 0 5px;
         }
 
         .status-value {
             color: #4a90e2;
             font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(74, 144, 226, 0.6);
-            border-radius: 4px;
-        }
-
-        .info-box {
-            padding: 0.75rem;
-            background: rgba(74, 144, 226, 0.1);
-            border-left: 3px solid #4a90e2;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            margin-top: 1rem;
         }
     </style>
 </head>
@@ -276,9 +266,6 @@
                         <button class="mode-btn active" data-mode="space">Space (ISS)</button>
                         <button class="mode-btn" data-mode="surface">Surface (Moon/Mars)</button>
                     </div>
-                    <div class="info-box" id="mode-info">
-                        Space Mode: Design a module to attach to the ISS via docking ports
-                    </div>
                 </div>
 
                 <div class="sidebar-section">
@@ -289,38 +276,38 @@
                         <option value="sphere">Spherical Module</option>
                         <option value="rectangular">Rectangular Module</option>
                     </select>
-
-                    <label>Diameter (m):</label>
-                    <input type="number" id="module-diameter" value="4.5" min="2" max="15" step="0.5" />
-
-                    <label>Length (m):</label>
-                    <input type="number" id="module-length" value="8" min="3" max="20" step="0.5" />
-
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <div style="flex:1">
+                            <label>Diameter (m):</label>
+                            <input type="number" id="module-diameter" value="4.5" min="2" max="15" step="0.5" />
+                        </div>
+                        <div style="flex:1">
+                            <label>Length (m):</label>
+                            <input type="number" id="module-length" value="8" min="3" max="20" step="0.5" />
+                        </div>
+                    </div>
                     <button id="update-module">Update Module</button>
                 </div>
 
                 <div class="sidebar-section" id="connection-section">
                     <h3>ISS Connection</h3>
-                    <label>Connection Port:</label>
-                    <select id="connection-port">
-                        <option value="forward">Forward (+Z)</option>
-                        <option value="aft">Aft (-Z)</option>
-                        <option value="port">Port (-X)</option>
-                        <option value="starboard">Starboard (+X)</option>
-                        <option value="zenith">Zenith (+Y)</option>
-                        <option value="nadir">Nadir (-Y)</option>
-                    </select>
-
-                    <label>Distance from ISS (m):</label>
-                    <input
-                        type="number"
-                        id="connection-distance"
-                        value="5"
-                        min="0"
-                        max="20"
-                        step="0.5"
-                    />
-
+                    <div style="display:flex; gap:10px;">
+                         <div style="flex:1">
+                            <label>Port:</label>
+                            <select id="connection-port">
+                                <option value="forward">Forward (+Z)</option>
+                                <option value="aft">Aft (-Z)</option>
+                                <option value="port">Port (-X)</option>
+                                <option value="starboard">Starboard (+X)</option>
+                                <option value="zenith">Zenith (+Y)</option>
+                                <option value="nadir">Nadir (-Y)</option>
+                            </select>
+                        </div>
+                        <div style="flex:1">
+                            <label>Dist (m):</label>
+                            <input type="number" id="connection-distance" value="5" min="0" max="20" step="0.5" />
+                        </div>
+                    </div>
                     <button id="attach-to-iss">Attach to ISS</button>
                     <button id="detach-from-iss" class="danger">Detach from ISS</button>
                 </div>
@@ -328,37 +315,24 @@
                 <div class="sidebar-section">
                     <h3>Internal Components</h3>
                     <div class="component-list">
-                        <div class="component-item" data-type="crew-quarters">
-                            <span>🛏️</span>Crew Quarters
-                        </div>
-                        <div class="component-item" data-type="laboratory">
-                            <span>🔬</span>Laboratory
-                        </div>
-                        <div class="component-item" data-type="life-support">
-                            <span>💨</span>Life Support System
-                        </div>
-                        <div class="component-item" data-type="storage">
-                            <span>📦</span>Storage Bay
-                        </div>
-                        <div class="component-item" data-type="airlock">
-                            <span>🚪</span>Airlock
-                        </div>
-                        <div class="component-item" data-type="power">
-                            <span>⚡</span>Power System
-                        </div>
+                         <div class="component-item" data-type="crew-quarters"><span>🛏️</span>Crew Quarters</div>
+                        <div class="component-item" data-type="laboratory"><span>🔬</span>Laboratory</div>
+                        <div class="component-item" data-type="life-support"><span>💨</span>Life Support System</div>
+                        <div class="component-item" data-type="storage"><span>📦</span>Storage Bay</div>
+                        <div class="component-item" data-type="airlock"><span>🚪</span>Airlock</div>
+                        <div class="component-item" data-type="power"><span>⚡</span>Power System</div>
                     </div>
                 </div>
-
+                
                 <div class="sidebar-section">
-                    <h3>Actions</h3>
-                    <button id="export-design">Export Design</button>
-                    <button id="reset-design" class="danger">Reset Design</button>
+                     <button id="export-design">Export Design</button>
+                     <button id="reset-design" class="danger">Reset Design</button>
                 </div>
             </aside>
 
             <main class="viewport">
                 <div class="viewport-header">
-                    <h3 id="viewport-title">3D View: ISS + Your Module</h3>
+                    <h3 id="viewport-title">3D View</h3>
                     <div class="view-controls">
                         <button id="toggle-iss">Toggle ISS</button>
                         <button id="reset-view">Reset View</button>
@@ -366,22 +340,10 @@
                 </div>
                 <div id="three-container"></div>
                 <div class="status-bar">
-                    <div class="status-item">
-                        <span class="status-label">Mode:</span>
-                        <span class="status-value" id="status-mode">Space (ISS)</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Module Volume:</span>
-                        <span class="status-value" id="status-volume">0 m³</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Components:</span>
-                        <span class="status-value" id="status-components">0</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Connected:</span>
-                        <span class="status-value" id="status-connected">No</span>
-                    </div>
+                    <div class="status-item">Mode: <span class="status-value" id="status-mode">Space</span></div>
+                    <div class="status-item">Vol: <span class="status-value" id="status-volume">0</span>m³</div>
+                    <div class="status-item">Comps: <span class="status-value" id="status-components">0</span></div>
+                    <div class="status-item">Connected: <span class="status-value" id="status-connected">No</span></div>
                 </div>
             </main>
         </div>
@@ -399,17 +361,14 @@
                 this.mode = 'space';
                 this.connected = false;
                 this.issVisible = true;
-                this.moduleConfig = {
-                    shape: 'cylinder',
-                    diameter: 4.5,
-                    length: 8,
-                };
-                // Drag and drop state
+                this.moduleConfig = { shape: 'cylinder', diameter: 4.5, length: 8 };
+                
                 this.raycaster = new THREE.Raycaster();
                 this.mouse = new THREE.Vector2();
                 this.draggedComponent = null;
                 this.offset = new THREE.Vector3();
                 this.dragPlane = new THREE.Plane();
+                
                 this.init();
             }
 
@@ -428,148 +387,145 @@
                 this.scene = new THREE.Scene();
                 this.scene.background = new THREE.Color(0x000000);
 
-                this.camera = new THREE.PerspectiveCamera(
-                    60,
-                    container.clientWidth / container.clientHeight,
-                    0.1,
-                    1000
-                );
+                this.camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
                 this.camera.position.set(30, 20, 30);
                 this.camera.lookAt(0, 0, 0);
 
                 this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio); 
                 container.appendChild(this.renderer.domElement);
 
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                this.scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(50, 50, 50);
-                this.scene.add(directionalLight);
-
-                const gridHelper = new THREE.GridHelper(100, 50, 0x444444, 0x222222);
-                this.scene.add(gridHelper);
-                this.setupControls();
+                this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(50, 50, 50);
+                this.scene.add(dirLight);
+                this.scene.add(new THREE.GridHelper(100, 50, 0x444444, 0x222222));
+                
+                this.setupControls(container);
             }
 
-            setupControls() {
-                const container = document.getElementById('three-container');
-                let isMouseDown = false;
-                let previousMousePosition = { x: 0, y: 0 };
+            // Touch & Mouse Controls
+            setupControls(container) {
+                let isDown = false;
+                let startX, startY;
+                let theta, phi, radius;
 
-                container.addEventListener('mousedown', (e) => {
-                    if (this.draggedComponent) return; // Disable orbiting if dragging
-                    isMouseDown = true;
-                    previousMousePosition = { x: e.clientX, y: e.clientY };
-                });
+                const handleStart = (x, y) => {
+                    if(this.draggedComponent) return;
+                    isDown = true;
+                    startX = x;
+                    startY = y;
+                    
+                    const offset = new THREE.Vector3().copy(this.camera.position);
+                    radius = offset.length();
+                    theta = Math.atan2(offset.x, offset.z);
+                    phi = Math.acos(Math.min(Math.max(offset.y / radius, -1), 1));
+                };
 
-                container.addEventListener('mousemove', (e) => {
-                    if (!isMouseDown) return;
-                    if (this.draggedComponent) return; // disable orbit when dragging
-                    const deltaMove = {
-                        x: e.clientX - previousMousePosition.x,
-                        y: e.clientY - previousMousePosition.y,
-                    };
-                    const spherical = new THREE.Spherical();
-                    spherical.setFromVector3(this.camera.position);
-                    spherical.theta -= deltaMove.x * 0.01;
-                    spherical.phi += deltaMove.y * 0.01;
-                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-                    this.camera.position.setFromSpherical(spherical);
+                const handleMove = (x, y) => {
+                    if (!isDown || this.draggedComponent) return;
+                    
+                    const deltaX = (x - startX) * 0.005;
+                    const deltaY = (y - startY) * 0.005;
+
+                    theta -= deltaX;
+                    phi -= deltaY;
+                    phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
+
+                    this.camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+                    this.camera.position.y = radius * Math.cos(phi);
+                    this.camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
                     this.camera.lookAt(0, 0, 0);
-                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                    
+                    startX = x;
+                    startY = y;
+                };
+
+                const handleEnd = () => { isDown = false; };
+
+                // Mouse
+                container.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+                container.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+                container.addEventListener('mouseup', handleEnd);
+                container.addEventListener('mouseleave', handleEnd);
+                container.addEventListener('wheel', e => {
+                     if (this.draggedComponent) return;
+                     const zoomSpeed = 0.1;
+                     const direction = e.deltaY > 0 ? 1 : -1;
+                     this.camera.position.multiplyScalar(1 + direction * zoomSpeed);
                 });
 
-                container.addEventListener('mouseup', () => {
-                    isMouseDown = false;
-                });
+                // Touch
+                container.addEventListener('touchstart', e => {
+                    if(e.touches.length === 1) handleStart(e.touches[0].clientX, e.touches[0].clientY);
+                }, { passive: false });
 
-                container.addEventListener('wheel', (e) => {
-                    if (this.draggedComponent) return;
-                    const zoomSpeed = 0.1;
-                    const direction = e.deltaY > 0 ? 1 : -1;
-                    this.camera.position.multiplyScalar(1 + direction * zoomSpeed);
-                });
+                container.addEventListener('touchmove', e => {
+                    if(e.touches.length === 1) {
+                        e.preventDefault(); 
+                        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                }, { passive: false });
+
+                container.addEventListener('touchend', handleEnd);
             }
 
             createISS() {
                 this.iss = new THREE.Group();
-                const coreGeometry = new THREE.CylinderGeometry(2, 2, 15, 16);
-                const coreMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
-                const core = new THREE.Mesh(coreGeometry, coreMaterial);
+                const core = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 15, 16), new THREE.MeshLambertMaterial({ color: 0xcccccc }));
                 core.rotation.z = Math.PI / 2;
                 this.iss.add(core);
-                const panelGeometry = new THREE.BoxGeometry(20, 0.2, 8);
-                const panelMaterial = new THREE.MeshLambertMaterial({ color: 0x1a3d5c });
-                const panel1 = new THREE.Mesh(panelGeometry, panelMaterial);
-                panel1.position.set(0, 5, 0);
-                this.iss.add(panel1);
-                const panel2 = new THREE.Mesh(panelGeometry, panelMaterial);
-                panel2.position.set(0, -5, 0);
-                this.iss.add(panel2);
-                const portGeometry = new THREE.CylinderGeometry(0.8, 0.8, 1, 16);
-                const portMaterial = new THREE.MeshLambertMaterial({ color: 0xff6b6b });
-                const positions = [
-                    [8, 0, 0], // forward
-                    [-8, 0, 0], // aft
-                    [0, 0, 4], // port
-                    [0, 0, -4], // starboard
-                    [0, 3, 0], // zenith
-                    [0, -3, 0], // nadir
+                
+                const panelMat = new THREE.MeshLambertMaterial({ color: 0x1a3d5c });
+                const panel1 = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 8), panelMat); panel1.position.y = 5;
+                const panel2 = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 8), panelMat); panel2.position.y = -5;
+                this.iss.add(panel1, panel2);
+                
+                const portGeo = new THREE.CylinderGeometry(0.8, 0.8, 1, 16);
+                const portMat = new THREE.MeshLambertMaterial({ color: 0xff6b6b });
+                const ports = [
+                    {pos: [8,0,0], rot:[0,0,Math.PI/2]}, {pos: [-8,0,0], rot:[0,0,Math.PI/2]},
+                    {pos: [0,0,4], rot:[Math.PI/2,0,0]}, {pos: [0,0,-4], rot:[Math.PI/2,0,0]},
+                    {pos: [0,3,0], rot:[0,0,0]}, {pos: [0,-3,0], rot:[0,0,0]}
                 ];
-                positions.forEach((pos) => {
-                    const port = new THREE.Mesh(portGeometry, portMaterial);
-                    port.position.set(...pos);
-                    if (pos[0] !== 0) port.rotation.z = Math.PI / 2;
-                    if (pos[2] !== 0) port.rotation.x = Math.PI / 2;
-                    this.iss.add(port);
+                ports.forEach(p => {
+                    const mesh = new THREE.Mesh(portGeo, portMat);
+                    mesh.position.set(...p.pos);
+                    mesh.rotation.set(...p.rot);
+                    this.iss.add(mesh);
                 });
                 this.scene.add(this.iss);
             }
 
             createUserModule() {
-                if (this.userModule) {
-                    this.scene.remove(this.userModule);
-                }
+                if (this.userModule) this.scene.remove(this.userModule);
                 this.userModule = new THREE.Group();
-                let geometry;
-                const material = new THREE.MeshLambertMaterial({
-                    color: 0x4a90e2,
-                    transparent: true,
-                    opacity: 0.8,
-                });
+                
                 const { shape, diameter, length } = this.moduleConfig;
-                const radius = diameter / 2;
-                switch (shape) {
-                    case 'cylinder':
-                        geometry = new THREE.CylinderGeometry(radius, radius, length, 32);
-                        break;
-                    case 'sphere':
-                        geometry = new THREE.SphereGeometry(radius, 32, 16);
-                        break;
-                    case 'rectangular':
-                        geometry = new THREE.BoxGeometry(diameter, diameter, length);
-                        break;
-                }
-                const module = new THREE.Mesh(geometry, material);
-                if (shape === 'cylinder') {
-                    module.rotation.z = Math.PI / 2;
-                }
-                this.userModule.add(module);
-                // Add connection port
-                const portGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.8, 16);
-                const portMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
-                const port = new THREE.Mesh(portGeometry, portMaterial);
+                const r = diameter / 2;
+                let geo;
+                
+                if(shape === 'cylinder') geo = new THREE.CylinderGeometry(r, r, length, 32);
+                else if(shape === 'sphere') geo = new THREE.SphereGeometry(r, 32, 16);
+                else geo = new THREE.BoxGeometry(diameter, diameter, length);
+                
+                const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x4a90e2, transparent: true, opacity: 0.8 }));
+                if(shape === 'cylinder') mesh.rotation.z = Math.PI/2;
+                
+                this.userModule.add(mesh);
+                
+                // Connection port
+                const port = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.8, 16), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
                 port.position.x = -length / 2 - 0.4;
                 port.rotation.z = Math.PI / 2;
                 this.userModule.add(port);
+
                 this.userModule.position.set(20, 0, 0);
                 this.scene.add(this.userModule);
-                // After recreating, re-add internal components
-                this.internalComponents.forEach((c) => {
-                    this.userModule.add(c.mesh);
-                });
+                
+                // Re-add components
+                this.internalComponents.forEach(c => this.userModule.add(c.mesh));
                 this.updateStatus();
             }
 
@@ -586,7 +542,7 @@
                 };
                 const targetPos = positions[port];
                 this.userModule.position.set(...targetPos);
-                if (port === 'forward' || port === 'aft') {
+                 if (port === 'forward' || port === 'aft') {
                     this.userModule.rotation.y = port === 'forward' ? Math.PI : 0;
                 } else if (port === 'port' || port === 'starboard') {
                     this.userModule.rotation.y = port === 'port' ? -Math.PI / 2 : Math.PI / 2;
@@ -596,7 +552,7 @@
                 this.connected = true;
                 this.updateStatus();
             }
-
+            
             detachFromISS() {
                 this.userModule.position.set(20, 0, 0);
                 this.userModule.rotation.set(0, 0, 0);
@@ -605,77 +561,32 @@
             }
 
             addInternalComponent(type) {
+                // Restored ORIGINAL DATA
                 const componentData = {
                     'crew-quarters': { color: 0xff6b6b, size: 1.5, name: 'Crew Quarters' },
-                    laboratory: { color: 0x9c88ff, size: 1.8, name: 'Laboratory' },
+                    'laboratory': { color: 0x9c88ff, size: 1.8, name: 'Laboratory' },
                     'life-support': { color: 0x00ff00, size: 1.2, name: 'Life Support' },
-                    storage: { color: 0xffa500, size: 1.0, name: 'Storage Bay' },
-                    airlock: { color: 0x888888, size: 1.5, name: 'Airlock' },
-                    power: { color: 0xffff00, size: 1.3, name: 'Power System' },
+                    'storage': { color: 0xffa500, size: 1.0, name: 'Storage Bay' },
+                    'airlock': { color: 0x888888, size: 1.5, name: 'Airlock' },
+                    'power': { color: 0xffff00, size: 1.3, name: 'Power System' },
                 };
+                
                 const data = componentData[type];
-                const geometry = new THREE.BoxGeometry(data.size, data.size, data.size);
-                const material = new THREE.MeshLambertMaterial({ color: data.color });
-                const component = new THREE.Mesh(geometry, material);
-                // Random position inside module
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(data.size, data.size, data.size), new THREE.MeshLambertMaterial({ color: data.color }));
+                
                 const range = this.moduleConfig.diameter / 2 - data.size;
-                component.position.set(
+                mesh.position.set(
                     (Math.random() - 0.5) * range,
                     (Math.random() - 0.5) * range,
                     (Math.random() - 0.5) * this.moduleConfig.length
                 );
-                // Enable draggable property
-                component.userData.draggable = true;
-                this.userModule.add(component);
-                this.internalComponents.push({ mesh: component, type, name: data.name });
+                mesh.userData.draggable = true;
+                
+                this.userModule.add(mesh);
+                this.internalComponents.push({ mesh, type, name: data.name });
                 this.updateStatus();
             }
-
-            switchMode(newMode) {
-                this.mode = newMode;
-                if (newMode === 'space') {
-                    this.iss.visible = true;
-                    document.getElementById('connection-section').style.display = 'block';
-                    document.getElementById('mode-info').textContent =
-                        'Space Mode: Design a module to attach to the ISS via docking ports';
-                    document.getElementById('viewport-title').textContent = '3D View: ISS + Your Module';
-                } else {
-                    this.iss.visible = false;
-                    this.connected = false;
-                    document.getElementById('connection-section').style.display = 'none';
-                    document.getElementById('mode-info').textContent =
-                        'Surface Mode: Design a habitat for deployment on Moon or Mars surface';
-                    document.getElementById('viewport-title').textContent = '3D View: Surface Habitat Module';
-                    this.userModule.position.set(0, this.moduleConfig.diameter / 2, 0);
-                    this.userModule.rotation.set(0, 0, 0);
-                }
-                this.updateStatus();
-            }
-
-            updateStatus() {
-                document.getElementById('status-mode').textContent =
-                    this.mode === 'space' ? 'Space (ISS)' : 'Surface (Moon/Mars)';
-                const volume = this.calculateVolume();
-                document.getElementById('status-volume').textContent = volume.toFixed(1) + ' m³';
-                document.getElementById('status-components').textContent = this.internalComponents.length;
-                document.getElementById('status-connected').textContent = this.connected ? 'Yes' : 'No';
-            }
-
-            calculateVolume() {
-                const { shape, diameter, length } = this.moduleConfig;
-                const radius = diameter / 2;
-                switch (shape) {
-                    case 'cylinder':
-                        return Math.PI * radius * radius * length;
-                    case 'sphere':
-                        return (4 / 3) * Math.PI * radius * radius * radius;
-                    case 'rectangular':
-                        return diameter * diameter * length;
-                    default:
-                        return 0;
-                }
-            }
-
+            
             exportDesign() {
                 const design = {
                     mode: this.mode,
@@ -684,11 +595,7 @@
                     components: this.internalComponents.map((c) => ({
                         type: c.type,
                         name: c.name,
-                        position: {
-                            x: c.mesh.position.x,
-                            y: c.mesh.position.y,
-                            z: c.mesh.position.z,
-                        },
+                        position: { x: c.mesh.position.x, y: c.mesh.position.y, z: c.mesh.position.z },
                     })),
                     volume: this.calculateVolume(),
                     timestamp: new Date().toISOString(),
@@ -704,59 +611,147 @@
             }
 
             resetDesign() {
-                this.internalComponents.forEach((c) => {
-                    this.userModule.remove(c.mesh);
-                });
+                this.internalComponents.forEach((c) => this.userModule.remove(c.mesh));
                 this.internalComponents = [];
                 this.detachFromISS();
                 this.updateStatus();
             }
 
+            setupDragDrop() {
+                const container = this.renderer.domElement;
+                
+                // Unified handler for Touch and Mouse
+                const handleDragStart = (clientX, clientY) => {
+                    const rect = container.getBoundingClientRect();
+                    this.mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                    this.mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const targets = this.internalComponents.map((c) => c.mesh);
+                    const intersects = this.raycaster.intersectObjects(targets, false);
+                    
+                    if(intersects.length > 0) {
+                        this.draggedComponent = intersects[0].object;
+                        this.dragPlane.setFromNormalAndCoplanarPoint(this.camera.getWorldDirection(new THREE.Vector3()), intersects[0].point);
+                        this.offset.copy(intersects[0].point).sub(this.draggedComponent.position);
+                        container.style.cursor = 'grabbing';
+                        return true; // Captured
+                    }
+                    return false;
+                };
+
+                const handleDragMove = (clientX, clientY) => {
+                    if(!this.draggedComponent) return;
+                    
+                    const rect = container.getBoundingClientRect();
+                    this.mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                    this.mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const intersect = new THREE.Vector3();
+                    this.raycaster.ray.intersectPlane(this.dragPlane, intersect);
+                    
+                    if(intersect) {
+                        const newPos = intersect.sub(this.offset);
+                        // Clamp
+                        const d = this.moduleConfig.diameter;
+                        const l = this.moduleConfig.length;
+                        newPos.x = Math.max(-d, Math.min(d, newPos.x));
+                        newPos.y = Math.max(-d, Math.min(d, newPos.y));
+                        newPos.z = Math.max(-l / 2, Math.min(l / 2, newPos.z));
+                        this.draggedComponent.position.copy(newPos);
+                    }
+                };
+
+                const handleDragEnd = () => {
+                    this.draggedComponent = null;
+                    container.style.cursor = 'default';
+                };
+
+                // Mouse listeners
+                container.addEventListener('mousedown', e => { if(e.button===0) handleDragStart(e.clientX, e.clientY); });
+                container.addEventListener('mousemove', e => handleDragMove(e.clientX, e.clientY));
+                container.addEventListener('mouseup', handleDragEnd);
+
+                // Touch listeners
+                container.addEventListener('touchstart', e => {
+                    if(e.touches.length === 1) {
+                       if(handleDragStart(e.touches[0].clientX, e.touches[0].clientY)) {
+                           // e.preventDefault(); // Consumed by object drag
+                       }
+                    }
+                }, {passive: false});
+                
+                container.addEventListener('touchmove', e => {
+                    if(this.draggedComponent && e.touches.length === 1) {
+                        e.preventDefault(); // Stop screen move while dragging object
+                        handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                }, {passive: false});
+                
+                container.addEventListener('touchend', handleDragEnd);
+            }
+
             setupEventListeners() {
-                document.querySelectorAll('.mode-btn').forEach((btn) => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelectorAll('.mode-btn').forEach((b) =>
-                            b.classList.remove('active')
-                        );
+                // Mode Switching
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                         e.target.classList.add('active');
-                        this.switchMode(e.target.dataset.mode);
+                        this.mode = e.target.dataset.mode;
+                        if(this.mode === 'space') {
+                            this.issVisible = true;
+                            this.iss.visible = true;
+                            document.getElementById('connection-section').style.display = 'block';
+                             document.getElementById('viewport-title').textContent = '3D View: ISS + Your Module';
+                             document.getElementById('mode-info').textContent = 'Space Mode: Design a module to attach to the ISS via docking ports';
+                        } else {
+                            this.issVisible = false;
+                            this.iss.visible = false;
+                            this.connected = false;
+                            document.getElementById('connection-section').style.display = 'none';
+                             document.getElementById('viewport-title').textContent = '3D View: Surface Habitat Module';
+                             document.getElementById('mode-info').textContent = 'Surface Mode: Design a habitat for deployment on Moon or Mars surface';
+                            this.userModule.position.set(0, this.moduleConfig.diameter/2, 0);
+                            this.userModule.rotation.set(0,0,0);
+                        }
+                        this.updateStatus();
                     });
                 });
+
+                // Updates & Adds
                 document.getElementById('update-module').addEventListener('click', () => {
                     this.moduleConfig.shape = document.getElementById('module-shape').value;
-                    this.moduleConfig.diameter = parseFloat(
-                        document.getElementById('module-diameter').value
-                    );
-                    this.moduleConfig.length = parseFloat(
-                        document.getElementById('module-length').value
-                    );
+                    this.moduleConfig.diameter = parseFloat(document.getElementById('module-diameter').value);
+                    this.moduleConfig.length = parseFloat(document.getElementById('module-length').value);
                     this.createUserModule();
                 });
-                document.getElementById('attach-to-iss').addEventListener('click', () => {
-                    this.attachToISS();
-                });
-                document.getElementById('detach-from-iss').addEventListener('click', () => {
-                    this.detachFromISS();
-                });
-                document.querySelectorAll('.component-item').forEach((item) => {
-                    item.addEventListener('click', () => {
+
+                document.getElementById('attach-to-iss').addEventListener('click', () => this.attachToISS());
+                document.getElementById('detach-from-iss').addEventListener('click', () => this.detachFromISS());
+
+                document.querySelectorAll('.component-item').forEach(item => {
+                    item.addEventListener('click', () => this.addInternalComponent(item.dataset.type));
+                    item.addEventListener('touchend', (e) => {
+                        e.preventDefault(); 
                         this.addInternalComponent(item.dataset.type);
                     });
                 });
+
                 document.getElementById('toggle-iss').addEventListener('click', () => {
                     this.issVisible = !this.issVisible;
                     this.iss.visible = this.issVisible && this.mode === 'space';
                 });
+
                 document.getElementById('reset-view').addEventListener('click', () => {
-                    this.camera.position.set(30, 20, 30);
-                    this.camera.lookAt(0, 0, 0);
+                    this.camera.position.set(30,20,30);
+                    this.camera.lookAt(0,0,0);
                 });
-                document.getElementById('export-design').addEventListener('click', () => {
-                    this.exportDesign();
-                });
-                document.getElementById('reset-design').addEventListener('click', () => {
-                    this.resetDesign();
-                });
+                
+                document.getElementById('export-design').addEventListener('click', () => this.exportDesign());
+                document.getElementById('reset-design').addEventListener('click', () => this.resetDesign());
+
+                // Handle Window Resize
                 window.addEventListener('resize', () => {
                     const container = document.getElementById('three-container');
                     this.camera.aspect = container.clientWidth / container.clientHeight;
@@ -764,94 +759,30 @@
                     this.renderer.setSize(container.clientWidth, container.clientHeight);
                 });
             }
+            
+            calculateVolume() {
+                const { shape, diameter, length } = this.moduleConfig;
+                const r = diameter / 2;
+                if(shape === 'cylinder') return Math.PI * r * r * length;
+                if(shape === 'sphere') return (4/3) * Math.PI * Math.pow(r, 3);
+                return diameter * diameter * length;
+            }
 
-            setupDragDrop() {
-                const container = this.renderer.domElement;
-                let isDragging = false;
-
-                container.addEventListener('mousedown', (event) => {
-                    if (event.button !== 0) return; // Left button only
-                    const rect = container.getBoundingClientRect();
-                    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-                    this.raycaster.setFromCamera(this.mouse, this.camera);
-
-                    // Only pick internal components
-                    const targets = this.internalComponents.map((c) => c.mesh);
-                    const intersects = this.raycaster.intersectObjects(targets, false);
-
-                    if (intersects.length > 0) {
-                        isDragging = true;
-                        this.draggedComponent = intersects[0].object;
-
-                        // Set drag plane perpendicular to camera, through intersect point
-                        this.dragPlane.setFromNormalAndCoplanarPoint(
-                            this.camera.getWorldDirection(new THREE.Vector3()),
-                            intersects[0].point
-                        );
-
-                        // Calculate offset between component's center and click point
-                        this.offset.copy(intersects[0].point).sub(this.draggedComponent.position);
-
-                        // Change cursor for dragging
-                        container.style.cursor = 'grabbing';
-                    }
-                });
-
-                container.addEventListener('mousemove', (event) => {
-                    if (!this.draggedComponent || !isDragging) return;
-
-                    const rect = container.getBoundingClientRect();
-                    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-                    this.raycaster.setFromCamera(this.mouse, this.camera);
-
-                    // Find intersection with drag plane
-                    const planeIntersect = new THREE.Vector3();
-                    this.raycaster.ray.intersectPlane(this.dragPlane, planeIntersect);
-                    if (!planeIntersect) return;
-
-                    // Move component to new position (subtracting initial offset)
-                    let newPos = planeIntersect.clone().sub(this.offset);
-
-                    // Clamp position inside the module's bounding box
-                    const d = this.moduleConfig.diameter;
-                    const l = this.moduleConfig.length;
-                    newPos.x = Math.max(-d, Math.min(d, newPos.x));
-                    newPos.y = Math.max(-d, Math.min(d, newPos.y));
-                    newPos.z = Math.max(-l / 2, Math.min(l / 2, newPos.z));
-                    this.draggedComponent.position.copy(newPos);
-                });
-
-                container.addEventListener('mouseup', () => {
-                    if (this.draggedComponent) {
-                        isDragging = false;
-                        this.draggedComponent = null;
-                        container.style.cursor = '';
-                    }
-                });
-
-                // Escape key cancels dragging
-                window.addEventListener('keydown', (event) => {
-                    if (event.key === 'Escape' && this.draggedComponent) {
-                        this.draggedComponent = null;
-                        container.style.cursor = '';
-                    }
-                });
+            updateStatus() {
+                document.getElementById('status-mode').innerText = this.mode === 'space' ? 'Space (ISS)' : 'Surface';
+                document.getElementById('status-volume').innerText = this.calculateVolume().toFixed(1);
+                document.getElementById('status-components').innerText = this.internalComponents.length;
+                document.getElementById('status-connected').innerText = this.connected ? 'Yes' : 'No';
             }
 
             animate() {
                 requestAnimationFrame(() => this.animate());
-                if (this.iss) {
-                    this.iss.rotation.y += 0.001;
-                }
+                if(this.iss && this.mode === 'space') this.iss.rotation.y += 0.001;
                 this.renderer.render(this.scene, this.camera);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            new HabitatDesigner();
-        });
+        document.addEventListener('DOMContentLoaded', () => new HabitatDesigner());
     </script>
 </body>
 </html>
