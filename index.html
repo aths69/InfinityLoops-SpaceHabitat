@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Space Apps 2025: Habitat Layout Creator</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0d17; color: white; }
+        
+        /* UI Overlay */
+        #ui-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: rgba(16, 20, 35, 0.95);
+            padding: 20px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        h1 { font-size: 1.2rem; margin-bottom: 10px; color: #4facfe; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { font-size: 0.9rem; margin-top: 20px; margin-bottom: 10px; color: #aaa; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; }
+        select, input { width: 100%; padding: 8px; margin-bottom: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 4px; }
+        
+        button {
+            width: 100%; padding: 10px; margin-bottom: 8px;
+            border: none; border-radius: 4px;
+            cursor: pointer; font-weight: bold;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        button:hover { filter: brightness(1.2); transform: translateX(5px); }
+        
+        /* Module Buttons Colors */
+        .btn-sleep { background: #3b5998; color: white; }
+        .btn-hygiene { background: #00a86b; color: white; }
+        .btn-lab { background: #8e44ad; color: white; }
+        .btn-galley { background: #d35400; color: white; }
+        .btn-storage { background: #7f8c8d; color: white; }
+        .btn-reset { background: #c0392b; text-align: center; justify-content: center; margin-top: auto; }
+
+        /* Right Panel - Stats */
+        .stats-panel {
+            width: 280px;
+            background: rgba(16, 20, 35, 0.9);
+            padding: 20px;
+            pointer-events: auto;
+            border-left: 1px solid #333;
+        }
+
+        .stat-item { margin-bottom: 15px; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
+        .progress-bar { width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s; }
+        
+        #status-log {
+            margin-top: 20px;
+            height: 150px;
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #0f0;
+            overflow-y: auto;
+        }
+
+        /* Active Selection Indicator */
+        .active-module { border: 2px solid #fff; box-shadow: 0 0 10px #4facfe; }
+
+        /* Tooltip/Help */
+        #help-text {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px;
+            font-size: 0.9rem; pointer-events: none;
+        }
+    </style>
+    <!-- Import Three.js from CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="ui-container">
+        <!-- Left Sidebar: Controls -->
+        <div class="sidebar">
+            <h1>Habitat Creator</h1>
+            
+            <h2>1. Mission Parameters</h2>
+            <label>Habitat Shape</label>
+            <select id="shape-select">
+                <option value="cylinder">Cylindrical (ISS/Gateway)</option>
+                <option value="dome">Inflatable Dome (Surface)</option>
+            </select>
+
+            <label>Crew Size</label>
+            <input type="number" id="crew-size" value="4" min="1" max="10">
+
+            <label>Mission Duration (Days)</label>
+            <input type="number" id="duration" value="180" step="30">
+
+            <h2>2. Add Modules</h2>
+            <p style="font-size:0.75rem; color:#888;">Click a button, then click in the habitat.</p>
+            
+            <button class="btn-sleep" onclick="selectModule('sleep')">
+                <span>🛏️ Sleep Pod</span> <span style="font-size:0.7em">2m³</span>
+            </button>
+            <button class="btn-hygiene" onclick="selectModule('hygiene')">
+                <span>🚿 WHC / Hygiene</span> <span style="font-size:0.7em">3m³</span>
+            </button>
+            <button class="btn-galley" onclick="selectModule('galley')">
+                <span>🍽️ Galley & Food</span> <span style="font-size:0.7em">4m³</span>
+            </button>
+            <button class="btn-lab" onclick="selectModule('lab')">
+                <span>🔬 Science Rack</span> <span style="font-size:0.7em">2m³</span>
+            </button>
+            <button class="btn-storage" onclick="selectModule('storage')">
+                <span>📦 ECLSS / Stowage</span> <span style="font-size:0.7em">2m³</span>
+            </button>
+
+            <button class="btn-reset" onclick="resetHabitat()">⚠ RESET DESIGN</button>
+        </div>
+
+        <!-- Right Sidebar: Stats -->
+        <div class="stats-panel">
+            <h1>Mission Status</h1>
+            
+            <div class="stat-item">
+                <div class="stat-label"><span>Net Habitable Volume</span> <span id="vol-text">0 / 100 m³</span></div>
+                <div class="progress-bar"><div id="vol-bar" class="progress-fill" style="width: 0%; background: #4facfe;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label"><span>Power Consumption</span> <span id="pwr-text">0 kW</span></div>
+                <div class="progress-bar"><div id="pwr-bar" class="progress-fill" style="width: 0%; background: #f1c40f;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label"><span>Life Support (O2/H2O)</span> <span id="life-text">100%</span></div>
+                <div class="progress-bar"><div id="life-bar" class="progress-fill" style="width: 100%; background: #2ecc71;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label"><span>Crew Capacity</span> <span id="crew-cap-text">0 / 4</span></div>
+                <div class="progress-bar"><div id="crew-bar" class="progress-fill" style="width: 0%; background: #e74c3c;"></div></div>
+            </div>
+
+            <h2>System Log</h2>
+            <div id="status-log">
+                > System Initialized...<br>
+                > Waiting for layout input...
+            </div>
+        </div>
+    </div>
+
+    <div id="help-text">Orbit: Left Click | Pan: Right Click | Place: Click on Grid</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Global Variables ---
+        let scene, camera, renderer, controls;
+        let habitatMesh, floorGrid;
+        let raycaster, pointer;
+        let placedModules = [];
+        let selectedModuleType = null;
+        let ghostMesh = null; // The translucent preview of the module
+
+        // --- Configuration Constants ---
+        const GRID_SIZE = 1; // 1 meter grid
+        const COLORS = {
+            sleep: 0x3b5998,
+            hygiene: 0x00a86b,
+            galley: 0xd35400,
+            lab: 0x8e44ad,
+            storage: 0x7f8c8d,
+            ghost: 0xffffff
+        };
+        
+        const MODULE_SPECS = {
+            sleep:   { w: 1, h: 2, d: 2, vol: 4, power: 0.2, beds: 1, name: "Sleep Pod" },
+            hygiene: { w: 2, h: 2, d: 2, vol: 8, power: 0.5, beds: 0, name: "WHC" },
+            galley:  { w: 2, h: 2, d: 2, vol: 8, power: 1.0, beds: 0, name: "Galley" },
+            lab:     { w: 1, h: 2, d: 1, vol: 2, power: 1.5, beds: 0, name: "Science Rack" },
+            storage: { w: 1, h: 1, d: 1, vol: 1, power: 0.1, beds: 0, name: "Stowage" }
+        };
+
+        // --- Initialization ---
+        init();
+        animate();
+
+        function init() {
+            // Scene Setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0d17);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(8, 12, 8);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Soft white light
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+            dirLight.position.set(5, 10, 7);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Raycaster for mouse interaction
+            raycaster = new THREE.Raycaster();
+            pointer = new THREE.Vector2();
+
+            // Initial Habitat Construction
+            createHabitat('cylinder');
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('click', onMouseClick);
+            
+            // UI Event Listeners
+            document.getElementById('shape-select').addEventListener('change', (e) => {
+                createHabitat(e.target.value);
+            });
+            document.getElementById('crew-size').addEventListener('change', updateStats);
+        }
+
+        // --- Core Functions ---
+
+        function createHabitat(type) {
+            // Clear existing
+            if(habitatMesh) scene.remove(habitatMesh);
+            if(floorGrid) scene.remove(floorGrid);
+            placedModules.forEach(m => scene.remove(m));
+            placedModules = [];
+
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xcccccc, 
+                transparent: true, 
+                opacity: 0.3,
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0x4facfe, wireframe: true, transparent: true, opacity: 0.1 });
+
+            let radius = 4;
+            let height = 10;
+
+            if (type === 'cylinder') {
+                // Main Hull
+                const geometry = new THREE.CylinderGeometry(radius, radius, height, 32, 1, true);
+                // Cut open the top so we can see inside easily
+                const thetaLength = Math.PI * 1.6; // Leave a gap
+                const cutGeo = new THREE.CylinderGeometry(radius, radius, height, 32, 1, true, 0, thetaLength);
+                
+                habitatMesh = new THREE.Mesh(cutGeo, material);
+                habitatMesh.rotation.z = Math.PI / 2; // Lay flat
+                habitatMesh.position.y = radius; 
+                
+                // Visual Wireframe helper
+                const wire = new THREE.Mesh(geometry, wireMat);
+                wire.rotation.z = Math.PI / 2;
+                wire.position.y = radius;
+                habitatMesh.add(wire);
+
+            } else if (type === 'dome') {
+                const geometry = new THREE.SphereGeometry(6, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+                habitatMesh = new THREE.Mesh(geometry, material);
+                
+                const wire = new THREE.Mesh(geometry, wireMat);
+                habitatMesh.add(wire);
+            }
+
+            scene.add(habitatMesh);
+
+            // Create Floor Grid (The clickable area)
+            // In cylinder, floor is a plane in the middle. In dome, it's the ground.
+            const planeGeo = new THREE.PlaneGeometry(height, radius * 1.8);
+            if (type === 'dome') {
+                planeGeo.scale(1,1,1); // Adjust for dome
+                planeGeo.dispose(); // Recreate for dome
+                const domeFloor = new THREE.CircleGeometry(5.8, 32);
+                const gridHelper = new THREE.GridHelper(12, 12, 0x4facfe, 0x333333);
+                gridHelper.position.y = 0.05;
+                scene.add(gridHelper);
+                
+                // Invisible plane for raycasting
+                const floorMat = new THREE.MeshBasicMaterial({ visible: false });
+                floorGrid = new THREE.Mesh(new THREE.CircleGeometry(6, 32), floorMat);
+                floorGrid.rotation.x = -Math.PI / 2;
+                
+            } else {
+                // Cylinder Floor
+                const gridHelper = new THREE.GridHelper(height, height, 0x4facfe, 0x333333);
+                // gridHelper is square, we stretch it? No, just fit it.
+                scene.add(gridHelper);
+                
+                const floorMat = new THREE.MeshBasicMaterial({ visible: false });
+                floorGrid = new THREE.Mesh(new THREE.PlaneGeometry(height, 6), floorMat);
+                floorGrid.rotation.x = -Math.PI / 2;
+            }
+
+            scene.add(floorGrid);
+            updateStats();
+            log(`Habitat Hull constructed: ${type.toUpperCase()}`);
+        }
+
+        // Make functions available globally for HTML buttons
+        window.selectModule = function(type) {
+            selectedModuleType = type;
+            
+            // Highlight button
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active-module'));
+            document.querySelector(`.btn-${type}`).classList.add('active-module');
+
+            // Create Ghost Mesh for preview
+            if (ghostMesh) scene.remove(ghostMesh);
+            
+            const specs = MODULE_SPECS[type];
+            const geo = new THREE.BoxGeometry(specs.w, specs.h, specs.d);
+            const mat = new THREE.MeshBasicMaterial({ color: COLORS[type], transparent: true, opacity: 0.5 });
+            ghostMesh = new THREE.Mesh(geo, mat);
+            scene.add(ghostMesh);
+        };
+
+        window.resetHabitat = function() {
+            const shape = document.getElementById('shape-select').value;
+            createHabitat(shape);
+            log("Habitat Reset.");
+        };
+
+        function onPointerMove(event) {
+            // Normalize mouse coordinates
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            if (selectedModuleType && ghostMesh && floorGrid) {
+                raycaster.setFromCamera(pointer, camera);
+                const intersects = raycaster.intersectObject(floorGrid);
+
+                if (intersects.length > 0) {
+                    const pt = intersects[0].point;
+                    // Snap to grid
+                    const x = Math.round(pt.x);
+                    const z = Math.round(pt.z);
+                    
+                    // Update ghost position (y is half height)
+                    const specs = MODULE_SPECS[selectedModuleType];
+                    ghostMesh.position.set(x, specs.h/2, z);
+                }
+            }
+        }
+
+        function onMouseClick(event) {
+            // Prevent placing if clicking UI
+            if (event.target.closest('.sidebar') || event.target.closest('.stats-panel')) return;
+
+            if (selectedModuleType && ghostMesh) {
+                // Clone the ghost to create real module
+                const specs = MODULE_SPECS[selectedModuleType];
+                const geo = new THREE.BoxGeometry(specs.w, specs.h, specs.d);
+                
+                // Advanced Material
+                const mat = new THREE.MeshStandardMaterial({ color: COLORS[selectedModuleType], roughness: 0.2 });
+                const mesh = new THREE.Mesh(geo, mat);
+                
+                mesh.position.copy(ghostMesh.position);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                // Basic Collision Check (Very simple distance check)
+                let collision = false;
+                for(let m of placedModules) {
+                    if (m.position.distanceTo(mesh.position) < 1.5) collision = true; 
+                    // Simple logic: if centers are too close. A real box intersection is better but complex for single file.
+                }
+
+                if (!collision) {
+                    scene.add(mesh);
+                    // Store data in the mesh for stats
+                    mesh.userData = specs;
+                    placedModules.push(mesh);
+                    
+                    // Add a label (simple text approach requires sprites, keeping it simple with log)
+                    log(`Placed ${specs.name} at [${mesh.position.x}, ${mesh.position.z}]`);
+                    
+                    updateStats();
+                } else {
+                    log("ERROR: Cannot place here. Space occupied.", "red");
+                }
+            }
+        }
+
+        function updateStats() {
+            let totalVol = 0;
+            let totalPower = 0;
+            let beds = 0;
+            let totalModules = placedModules.length;
+            
+            // Calculate totals
+            placedModules.forEach(m => {
+                const data = m.userData;
+                totalVol += data.vol;
+                totalPower += data.power;
+                beds += data.beds;
+            });
+
+            const crewSize = parseInt(document.getElementById('crew-size').value);
+            const maxVol = 150; // Arbitrary max for the demo hull
+
+            // Update Volume
+            updateBar('vol', totalVol, maxVol, 'm³');
+
+            // Update Power (Arbitrary limit of 10kW)
+            updateBar('pwr', totalPower, 10, 'kW');
+
+            // Update Crew Capacity
+            const crewText = document.getElementById('crew-cap-text');
+            const crewBar = document.getElementById('crew-bar');
+            crewText.innerText = `${beds} Beds / ${crewSize} Crew`;
+            const crewPercent = Math.min((beds / crewSize) * 100, 100);
+            crewBar.style.width = crewPercent + "%";
+            crewBar.style.backgroundColor = beds >= crewSize ? "#2ecc71" : "#e74c3c";
+
+            // Life Support Logic
+            // Need 1 Hygiene per 4 crew, 1 Galley, 1 Stowage per crew
+            const hygieneCount = placedModules.filter(m => m.userData.name.includes("WHC")).length;
+            const galleyCount = placedModules.filter(m => m.userData.name.includes("Galley")).length;
+            
+            let health = 100;
+            let issues = [];
+            if (beds < crewSize) { health -= 20; issues.push("Not enough beds"); }
+            if (hygieneCount < Math.ceil(crewSize/4)) { health -= 20; issues.push("Need more Hygiene"); }
+            if (galleyCount < 1) { health -= 10; issues.push("No Galley"); }
+            
+            const lifeBar = document.getElementById('life-bar');
+            lifeBar.style.width = health + "%";
+            lifeBar.style.backgroundColor = health > 80 ? "#2ecc71" : (health > 40 ? "#f1c40f" : "#e74c3c");
+            document.getElementById('life-text').innerText = health + "%";
+
+            if (issues.length > 0 && placedModules.length > 0) {
+                log(`WARNING: ${issues.join(", ")}`, "orange");
+            }
+        }
+
+        function updateBar(id, current, max, unit) {
+            const bar = document.getElementById(`${id}-bar`);
+            const text = document.getElementById(`${id}-text`);
+            const pct = Math.min((current / max) * 100, 100);
+            bar.style.width = pct + "%";
+            text.innerText = `${current.toFixed(1)} / ${max} ${unit}`;
+            
+            if (current > max) {
+                bar.style.backgroundColor = "red";
+                log(`CRITICAL: ${id.toUpperCase()} limit exceeded!`, "red");
+            }
+        }
+
+        function log(msg, color="#0f0") {
+            const box = document.getElementById('status-log');
+            const line = document.createElement('div');
+            line.style.color = color;
+            line.innerText = `> ${msg}`;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
