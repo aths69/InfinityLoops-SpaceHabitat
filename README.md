@@ -44,8 +44,13 @@ It allows users to simulate **deployment in two critical environments**:
 
 This application runs entirely in the browser using WebGL.
 
-### How to Run
-1.  Download the repository.
+### 🚀 Try It Live
+**[Click Here to Launch the Habitat Designer](https://aths69.github.io/InfinityLoops-SpaceHabitat/)**
+*(No installation required. Runs directly in your browser.)*
+
+### 💻 Run Locally (Alternative)
+If you prefer to run the code on your own machine:
+1.  Download this repository.
 2.  Open `index.html` in any modern web browser (Chrome, Firefox, Edge).
 3.  *Note: An active internet connection is required to load the Three.js engine.*
 
